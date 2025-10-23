@@ -12,15 +12,38 @@ ID_LOG = os.path.join(OUTDIR, "downloaded_ids.txt")
 
 os.makedirs(OUTDIR, exist_ok=True)
 
-# yt-dlp konfigurasi: gunakan id tweet di nama file agar mudah cek duplikat
-ydl_opts = {
-    'outtmpl': os.path.join(OUTDIR, '%(upload_date)s_%(id)s.%(ext)s'),
-    'format': 'bestvideo+bestaudio/best',
-    'quiet': False,
-    'no_warnings': True,
-    # menghindari write-temp di direktori lain
-    'cachedir': False,
-}
+def sanitize_filename(text):
+    """Hilangkan karakter ilegal di nama file Windows."""
+    text = re.sub(r'[\\/*?:"<>|]', "", text)
+    text = text.strip().replace("\n", " ")
+    return text
+
+def get_caption_prefix(text, n=5):
+    """Ambil n kata pertama dari caption tweet."""
+    if not text:
+        return "no_caption"
+    words = text.split()
+    prefix = " ".join(words[:n])
+    return sanitize_filename(prefix)
+
+def download_tweet_video(tweet_url, prefix):
+    """Download video dari tweet dengan awalan nama file custom."""
+    outtmpl = os.path.join(OUTDIR, f"{prefix}_%(upload_date)s_%(id)s.%(ext)s")
+    ydl_opts = {
+        'outtmpl': outtmpl,
+        'format': 'bestvideo+bestaudio/best',
+        'quiet': False,
+        'no_warnings': True,
+        'cachedir': False,
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        try:
+            ydl.download([tweet_url])
+            return True
+        except Exception as e:
+            print(f"[ERROR] Gagal mendownload {tweet_url}: {e}")
+            return False
 
 def already_downloaded(tweet_id):
     # cek file di OUTDIR yang berisi _<tweet_id>.<ext>
