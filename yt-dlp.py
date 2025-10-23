@@ -6,7 +6,7 @@ output_dir = r"D:\twit"
 os.makedirs(output_dir, exist_ok=True)
 
 # File yang berisi list tweet URL, satu URL per baris
-input_file = "tweet.txt"
+input_file = "D:\tweet.txt"
 
 def download_tweet_video(url):
     # Template output filename: pakai ID tweet + ekstensi
